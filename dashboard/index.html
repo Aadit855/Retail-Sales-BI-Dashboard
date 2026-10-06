@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Superstore KPI Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root { --ink:#1f2933; --muted:#616e7c; --card:#f5f7fa; --accent:#2a6f97; --bad:#c0392b; }
+  body { font-family: system-ui, sans-serif; color: var(--ink); margin: 16px; background:#fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin-bottom: 16px; font-size: 14px; }
+  .kpis { display:grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:16px; }
+  .kpi { background:var(--card); border-radius:8px; padding:12px; }
+  .kpi .v { font-size: 22px; font-weight: 600; }
+  .kpi .l { font-size: 12px; color: var(--muted); }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(320px,1fr)); gap:16px; }
+  .card { background:#fff; border:1px solid #e4e7eb; border-radius:8px; padding:12px; }
+  .card h2 { font-size: 15px; margin: 0 0 8px; }
+  canvas { max-height: 280px; }
+</style></head>
+<body>
+<h1>Superstore sales and profit, 2009–2012</h1>
+<div class="sub">Order-line data (Tableau Superstore sample, Canadian regions). Margin = profit ÷ sales.</div>
+<div class="kpis">
+  <div class="kpi"><div class="v">$14,915,601</div><div class="l">Sales</div></div>
+  <div class="kpi"><div class="v">$1,521,768</div><div class="l">Profit</div></div>
+  <div class="kpi"><div class="v">10.2%</div><div class="l">Profit margin</div></div>
+  <div class="kpi"><div class="v">5,496</div><div class="l">Orders</div></div>
+</div>
+<div class="grid">
+  <div class="card"><h2>Monthly sales and profit</h2><canvas id="trend"></canvas></div>
+  <div class="card"><h2>Profit margin by discount band</h2><canvas id="disc"></canvas></div>
+  <div class="card"><h2>Profit margin by region</h2><canvas id="reg"></canvas></div>
+  <div class="card"><h2>Profit by category</h2><canvas id="cat"></canvas></div>
+</div>
+<script>
+const M = [["2009-01", 516302.96, 62326.4, 0.1207], ["2009-02", 332480.64, 30422.68, 0.0915], ["2009-03", 411628.73, 22802.96, 0.0554], ["2009-04", 393276.48, 39132.73, 0.0995], ["2009-05", 230145.54, 18035.35, 0.0784], ["2009-06", 263456.07, 34640.55, 0.1315], ["2009-07", 380503.97, 41749.43, 0.1097], ["2009-08", 329754.72, 14682.84, 0.0445], ["2009-09", 325292.31, 46652.05, 0.1434], ["2009-10", 361555.27, 55228.01, 0.1528], ["2009-11", 248933.43, 16222.22, 0.0652], ["2009-12", 415809.35, 52643.51, 0.1266], ["2010-01", 336526.68, 48177.27, 0.1432], ["2010-02", 271580.51, 25999.13, 0.0957], ["2010-03", 217808.01, 1116.68, 0.0051], ["2010-04", 266968.59, 17306.51, 0.0648], ["2010-05", 283534.28, 42636.66, 0.1504], ["2010-06", 293080.66, 36130.26, 0.1233], ["2010-07", 229885.5, 15918.45, 0.0692], ["2010-08", 207937.01, 21862.78, 0.1051], ["2010-09", 418343.28, 50022.73, 0.1196], ["2010-10", 365251.99, 48596.75, 0.133], ["2010-11", 290670.35, 23345.07, 0.0803], ["2010-12", 368093.95, 32759.19, 0.089], ["2011-01", 251467.23, 17704.56, 0.0704], ["2011-02", 299890.14, 20848.88, 0.0695], ["2011-03", 296035.87, 43243.56, 0.1461], ["2011-04", 288213.4, 36106.24, 0.1253], ["2011-05", 262628.5, 25585.24, 0.0974], ["2011-06", 197740.85, 17478.47, 0.0884], ["2011-07", 287905.19, 36903.84, 0.1282], ["2011-08", 274578.48, 24378.93, 0.0888], ["2011-09", 276049.8, 33098.01, 0.1199], ["2011-10", 305660.45, 49054.12, 0.1605], ["2011-11", 367769.5, 39560.02, 0.1076], ["2011-12", 328877.31, 37494.12, 0.114], ["2012-01", 340626.51, 43312.52, 0.1272], ["2012-02", 276132.5, 25158.43, 0.0911], ["2012-03", 348208.33, 37636.13, 0.1081], ["2012-04", 268024.97, 31361.04, 0.117], ["2012-05", 384588.06, 29371.44, 0.0764], ["2012-06", 276580.94, 30454.28, 0.1101], ["2012-07", 242809.7, 26393.59, 0.1087], ["2012-08", 302745.12, 13660.95, 0.0451], ["2012-09", 318271.57, 34579.9, 0.1086], ["2012-10", 351246.73, 21137.51, 0.0602], ["2012-11", 256020.1, 27543.05, 0.1076], ["2012-12", 354709.34, 21292.94, 0.06]];
+new Chart(document.getElementById('trend'), { type:'line', data:{
+  labels: M.map(r=>r[0]),
+  datasets:[{label:'Sales', data:M.map(r=>r[1]), borderColor:'#2a6f97', tension:.2, pointRadius:0},
+            {label:'Profit', data:M.map(r=>r[2]), borderColor:'#c0392b', tension:.2, pointRadius:0}]},
+  options:{ plugins:{legend:{position:'bottom'}}, scales:{x:{ticks:{maxTicksLimit:8}}} } });
+const D = [["0%", 756, 0.126, 0.463], ["1-4%", 3120, 0.1238, 0.4721], ["5-7%", 2230, 0.0855, 0.5175], ["8-10%", 2288, 0.0787, 0.5608], [">10% (few lines)", 5, -0.2134, 0.8]];
+new Chart(document.getElementById('disc'), { type:'bar', data:{
+  labels: D.map(r=>r[0]),
+  datasets:[{label:'Profit margin', data:D.map(r=>r[2]*100), backgroundColor:D.map(r=>r[2]<0?'#c0392b':'#2a6f97')}]},
+  options:{ plugins:{legend:{display:false}}, scales:{y:{title:{display:true,text:'%'}}} } });
+const R = [["Northwest Territories", 800847.33, 100653.08, 0.1257], ["Atlantic", 2014248.2, 238960.66, 0.1186], ["Ontario", 3063212.48, 346868.54, 0.1132], ["Prarie", 2837304.6, 321160.12, 0.1132], ["Quebec", 1510195.08, 140426.65, 0.093], ["West", 3597549.28, 297008.61, 0.0826], ["Yukon", 975867.37, 73849.21, 0.0757], ["Nunavut", 116376.48, 2841.11, 0.0244]];
+new Chart(document.getElementById('reg'), { type:'bar', data:{
+  labels: R.map(r=>r[0]),
+  datasets:[{label:'Profit margin', data:R.map(r=>r[3]*100), backgroundColor:'#61a5c2'}]},
+  options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{title:{display:true,text:'%'}}} } });
+const C = [["Technology", 5984248.18, 886313.52, 0.1481], ["Office Supplies", 3752762.1, 518021.43, 0.138], ["Furniture", 5178590.54, 117433.03, 0.0227]];
+new Chart(document.getElementById('cat'), { type:'bar', data:{
+  labels: C.map(r=>r[0]),
+  datasets:[{label:'Profit', data:C.map(r=>r[2]), backgroundColor:'#2a6f97'}]},
+  options:{ plugins:{legend:{display:false}} } });
+</script>
+</body></html>
